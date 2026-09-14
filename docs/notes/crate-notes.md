@@ -127,6 +127,16 @@ IMK 输入法，源码按 `app / host / imk / candidates / menubar / preferences
 外加 `settings`（WinUI 3 设置程序）与 `installer`（Inno Setup）。不合成一个 crate，因为 DLL 不能带 Engine 的依赖树，见 `apps/windows/README.md`；
 协议类型在 `qingjian-platform::protocol`，设计见 `docs/design/architecture.md`「Windows：TSF」。
 
+## apps/fcitx5
+
+Linux 壳（M0，`apps/fcitx5`）：Rust crate `qingjian-fcitx5`（`crate-type = ["cdylib", "rlib"]`）+ C++ addon（`addon/`，M1 起）。C++ 只碰 fcitx5 API，逻辑在 Rust，经 C ABI（`src/lib.rs`，`qj_*`）通信。
+
+- `src/engine.rs`：Engine 装配，与 CLI 同一套加载顺序；路径走 Linux 约定（`src/paths.rs`：`$XDG_CONFIG_HOME/qingjian`、`$XDG_DATA_HOME/qingjian`、随包 `/usr/share/qingjian`，`QINGJIAN_SHARE_DIR` 可覆盖）。主词库找不到才算失败，释义表 / LM / emoji / 附加词库缺失都退化。
+- `src/session.rs`：每个 InputContext 的候选分页 / 高亮 / preedit，移植 mac `host/session.rs`；候选注释 = 词性 + 译文。
+- `src/keys.rs`：平台无关按键路由（M0：字母 / 退格 / 回车 / 空格 / 数字 / 方向 / 翻页 / Esc / 标点；M2 补英文直输段、问字、表达式、修饰键、英文模式）。
+- `tests/c_abi.rs`：不依赖 fcitx5，直接调 `extern "C"` 冒烟（用仓库 `assets/` 数据）。
+- C++ addon（`apps/fcitx5/addon/`，M1 已在 fcitx5 5.0.14 编译并验证 `Loaded addon qingjian` + `Engine 就绪`）：`src/qingjian.cpp/.h` 把 fcitx5 的 `InputMethodEngineV2`（按键 / activate / deactivate / reset）与 `CommonCandidateList` 接到 C ABI；`qingjian-addon.conf.in` + `qingjian.conf`（inputmethod）+ metainfo + `icons/`（由 `assets/icon/logo.png` 缩出）；`CMakeLists.txt` 用 cargo 起 Rust cdylib、`PREFIX ""`、`INSTALL_RPATH=$ORIGIN`，装到 `FCITX_INSTALL_ADDONDIR`。编译要 `libfcitx5core-dev` 等；用户本地安装时 `FCITX_DATA_HOME` / `FCITX_DATA_DIRS` 要指向 `.../fcitx5` 目录本身（见 `apps/fcitx5/README.md`）。
+
 ## assets
 
 - `assets/sample/`：手写样例词库与释义表，不是产品数据。

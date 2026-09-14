@@ -106,4 +106,8 @@
     模型单文件 `.qjm` 已做（2026-09-12，复用 `.qj` 容器 `Kind::Model`，`find_model` 先 `.qjm` 再三件套目录，`pack model` / `tools/release/pack-model.sh`，
     data Release 传 `model.qjm`，bundle.sh / qingjian.iss 只带一个文件），待 mac 与 box 真机各装一次验加载与重排；
     密码框已按 TSF 规范做（2026-09-12）：`KEYBOARD_DISABLED` compartment 整键放行不组句，`IS_PRIVATE` / 密码 / PIN 输入范围为私密（组句但不学不记不发云端，`ClientMessage::Privacy` → `Engine::set_private`），box 真机验过：Edge 密码框整键放行；InPrivate 网页文本框报 `IS_SEARCH` 不报 `IS_PRIVATE`，私密路径只靠单测覆盖；CI 两个 job 都从 `data` Release 取 `model.qjm`（已做）。
-- [ ] Linux IBus / Fcitx（Phase 5）；配置同步、跨平台词库
+- [~] Linux IBus / Fcitx（Phase 5）；配置同步、跨平台词库。
+  Fcitx5 设计已定（2026-09-15，[design/linux-fcitx5.md](../design/linux-fcitx5.md)）：C++ 薄壳 + Rust cdylib（C ABI），
+  候选窗用 fcitx5 原生、不自绘。M0 骨架 + M1 addon 已完成并在 fcitx5 5.0.14 上编译通过、验证 load
+  （`Loaded addon qingjian` + `Engine 就绪`，`apps/fcitx5`）；还差：`fcitx5-configtool` 添加「青简」后真机打字验证、
+  再往 M2（英文直输段 / 问字 / 表达式 / 修饰键 / 英文模式）。IBus 之后另做。

@@ -52,7 +52,7 @@ qingjian/
 │   ├── macos/                  # IMK 输入法壳（app / host / imk / candidates / menubar / preferences）
 │   ├── windows/                # Server 进程（IPC 分派 + Engine + 命名管道）
 │   ├── windows-tsf/            # TSF 文本服务 DLL（cdylib）：COM 链路 + 连 Server 的管道客户端
-│   └── linux/                  # 规划
+│   └── fcitx5/                 # Linux 壳（规划）：C++ 薄壳 + Rust cdylib，见 design/linux-fcitx5.md
 │
 ├── tools/
 │   ├── dict-convert/           # 产品数据生成：lexicon / bigram / mine / english / emoji / pack
@@ -448,5 +448,6 @@ CC-CEDICT 表（`dict-convert cedict`）保留为备用来源，覆盖面广但�
 
 ### Linux：IBus / Fcitx
 
-- IBus 走 D-Bus（`zbus`），纯 Rust 即可。
-- Fcitx5 需要一层 C++ shim(Maybe)。
+- Fcitx5 走「C++ 薄壳 + Rust cdylib（C ABI）」：fcitx5 addon 是 C++ 装载的模块，没有稳定的纯 Rust addon 接口，
+  C++ 侧只碰 fcitx5 API、逻辑全在 Rust；候选窗交给 fcitx5 与桌面主题，不自绘。设计与落地计划见 [linux-fcitx5.md](linux-fcitx5.md)。
+- IBus 走 D-Bus（`zbus`），纯 Rust 即可（之后另做）。

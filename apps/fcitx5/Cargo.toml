@@ -1,0 +1,29 @@
+[package]
+name = "qingjian-fcitx5"
+description = "Fcitx5 输入法壳的 Rust 侧：持一个全局 Engine，经 C ABI 被 C++ addon 调用"
+version = "0.1.0-dev"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "qingjian_fcitx5"
+# cdylib 给 C++ addon 链接；rlib 让集成测试能直接调 C ABI。
+crate-type = ["cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+qingjian-core.workspace = true
+qingjian-dictionary.workspace = true
+qingjian-learning.workspace = true
+qingjian-platform.workspace = true
+qingjian-predict.workspace = true
+qingjian-lm.workspace = true
+qingjian-translate.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-appender.workspace = true
+tracing-subscriber.workspace = true
+dotenvy.workspace = true

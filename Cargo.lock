@@ -2227,6 +2227,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "qingjian-fcitx5"
+version = "0.1.0-dev"
+dependencies = [
+ "dotenvy",
+ "qingjian-core",
+ "qingjian-dictionary",
+ "qingjian-learning",
+ "qingjian-lm",
+ "qingjian-platform",
+ "qingjian-predict",
+ "qingjian-translate",
+ "thiserror 2.0.20",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "qingjian-format"
 version = "0.1.1"
 dependencies = [

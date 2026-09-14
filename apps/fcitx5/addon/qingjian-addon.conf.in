@@ -1,0 +1,7 @@
+[Addon]
+Name=Qingjian
+Category=InputMethod
+Version=@PROJECT_VERSION@
+Library=qingjian
+Type=SharedLibrary
+OnDemand=True

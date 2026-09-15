@@ -10,7 +10,7 @@
 ```text
 docs/user/
 ├── index.md              # 文档首页
-├── getting-started/      # 开始使用：安装、第一次输入、按键与快捷键（两个平台并排的总表）
+├── getting-started/      # 开始使用：安装、第一次输入、按键与快捷键（macOS / Windows 并排的总表）、Linux 预览
 ├── input/                # 输入：英文模式、拼写纠错、模糊音与双拼、快捷输入
 ├── learning/             # 学习：译词与生词、统计
 ├── cloud/                # 云联想（可选）

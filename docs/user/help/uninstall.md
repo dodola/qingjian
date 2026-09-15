@@ -27,6 +27,21 @@ description: 卸载青简、连同学习数据一起删除、只清除输入日�
 
 学习数据与设置保留在「%APPDATA%\Qingjian」，重新安装后仍可用；连同数据一起删除时，卸载后手动删除该文件夹。
 
+## Linux（预览）
+
+Linux 预览版从源码安装。在当初构建的目录执行（装到系统时命令前面加 `sudo`）：
+
+```sh
+cd apps/fcitx5/addon
+sudo cmake --build build --target uninstall
+```
+
+再删除数据与配置（装到当前账户时，另行删除 `~/.config/environment.d/fcitx5-qingjian.conf` 并重新登录）：
+
+```sh
+rm -rf ~/.local/share/qingjian ~/.config/qingjian
+```
+
 所有数据均为本机文件，删除后不可恢复，没有云端副本。
 
 ## 只清除一部分

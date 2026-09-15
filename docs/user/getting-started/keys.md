@@ -5,7 +5,7 @@ description: 青简在 macOS 与 Windows 上的全部按键与缺省快捷键：
 ---
 
 两个平台功能相同，按键按各自系统的习惯设计。表中 `⌥` 为 Option，`⌘` 为 Command，`⌃` 为 Control，`⇧` 为 Shift；
-「—」表示该平台没有此键。
+「—」表示该平台没有此键。Linux 预览版的按键较少，单独列在 [在 Linux 上](linux.md)，尚未并入下表。
 
 ## 切换模式
 

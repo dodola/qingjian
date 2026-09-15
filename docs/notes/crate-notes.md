@@ -162,3 +162,6 @@ Linux 壳（M0，`apps/fcitx5`）：Rust crate `qingjian-fcitx5`（`crate-type =
 - `phrases`：挖短语层（两遍扫语料：相邻两词、两段二元都够频的相邻三词，总次数与对话语料次数都 ≥ 2000 + 边界规则，读音由成分词拼出；我的 / 不知道 / 有没有 这类常用词表不收的组合，
   `assets/lexicon/phrases.tsv`；词库已并入过短语时重跑加 `--refresh`）。
 - `pack dict|lm|glossary`：打 `.qj`（释义表也进容器）。
+- `rime`：把 Rime `.dict.yaml`（雾凇拼音 iDvel/rime-ice，GPL-3.0-only）转成青简 TSV，**只当开发测试词库、不随产品发布**（起因：自建词库没有 报错，`baocuo` 退化成敲错路径出 爆粗）：
+  `cargo run --release -p qingjian-dict-convert -- rime <rime>/cn_dicts/base.dict.yaml <rime>/cn_dicts/ext.dict.yaml --out data/generated/rime-ice.tsv`（88 万条、27 MB，同词同音取最大权重；本次用 rime-ice 2026-01-26 / `59fcb4a`），
+  CLI 用 `--dict data/generated/rime-ice.tsv`，或把它命名成 `dict.tsv` 放进 `QINGJIAN_SHARE_DIR` 给壳用。

@@ -77,6 +77,18 @@ pub enum Command {
         language: String,
     },
 
+    /// Rime `.dict.yaml`（如雾凇拼音 iDvel/rime-ice 的 cn_dicts/base.dict.yaml）→ 青简 TSV。
+    /// 开发测试词库，GPL-3.0-only，不随产品发布（见 docs/design/landscape.md）
+    Rime {
+        /// 输入文件（可多个，如 base + ext；同词同音取最大权重）
+        #[arg(required = true)]
+        inputs: Vec<PathBuf>,
+
+        /// 输出文件；缺省写到 `--out-dir` 下的 rime-ice.tsv
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+
     /// 纯文本语料（每行一段）→ lm-unigram.tsv + lm-bigram.tsv：按词库分词后统计词级一元 / 二元计数
     Bigram {
         /// 语料文件（UTF-8 纯文本，简体）

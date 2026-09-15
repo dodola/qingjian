@@ -4,6 +4,7 @@
 //! - `cedict`：CC-CEDICT（CC BY-SA 4.0）→ `glossary-en.tsv`（释义表的备用来源，现在用 gloss-gen 的 LLM 表）
 //! - `english`：`词\t编码` 英文词表（数据包的 `05_english`，ESDB / CSpell，MIT）→ `english.tsv`
 //! - `emoji`：Unicode CLDR annotations（Unicode License v3，`--language zh|en`）→ `emoji-<语言>.tsv`（可发布，放 `assets/emoji/`）
+//! - `rime`：Rime `.dict.yaml`（雾凇拼音，GPL-3.0-only）→ 青简 TSV；**开发测试词库，不随产品发布**
 //! - `bigram`：纯文本语料（如 `tools/corpus/parquet_to_text.py` 转出的中文维基 CC BY-SA 4.0、LCCC 对话 MIT）→ `lm-unigram.tsv` + `lm-bigram.tsv`
 //! - `mine`：语料里分词落成连续单字的段 → `oov-candidates.tsv`（词库没收的高频词，标音后用 `lexicon --extra-words` 并入）
 //! - `phrases`：bigram 表的相邻两词 + 语料的相邻三词 → `phrases.tsv`（我的 / 不知道 这类短语层，读音由成分词拼出，同样用 `lexicon --extra-words` 并入）
@@ -22,6 +23,7 @@ mod lexicon;
 mod oov_filter;
 mod pack;
 mod phrases;
+mod rime;
 
 use clap::Parser;
 use tracing_subscriber::EnvFilter;
@@ -75,6 +77,10 @@ fn run() -> Result<(), ConvertError> {
             &args.out_dir.join(format!("emoji-{language}.tsv")),
             &language,
         ),
+        Command::Rime { inputs, out } => {
+            let out = out.unwrap_or_else(|| args.out_dir.join("rime-ice.tsv"));
+            rime::convert(&inputs, &out)
+        }
         Command::Bigram {
             corpus,
             dict,

@@ -4,7 +4,7 @@
 //! 目标文件名取源文件的主干（`law.dict.yaml` → `law.qj`），已存在就覆盖（重新导入即更新）。
 
 mod imported;
-mod rime;
+pub mod rime;
 
 use std::path::{Path, PathBuf};
 

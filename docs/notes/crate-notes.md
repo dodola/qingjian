@@ -89,6 +89,8 @@ Engine 侧在 `engine/rescoring/`：接了打分器就取 Viterbi 前 `RESCORE_P
 `set_value` 用 toml_edit 原地改键保留注释；`[model] enabled` 本地整句模型开关，`LocalModelConfig`）；`extra_dictionaries` 列出 / 加载随包领域词库与用户 `dicts/`
 （mac 壳与 Windows Server 共用，同名 `.qj` 优先于 `.tsv`）；`protocol` 模块是 Windows Server ↔ TSF DLL 的 IPC 协议类型
 （`ClientMessage` / `ServerMessage` / `Frame` / `PreeditSegment`，全 serde，两端共用，见 `docs/design/architecture.md`「Windows：TSF」）。
+`[apps] english_candidates_off` 缺省名单分三平台（macOS bundle identifier / Windows exe 名 / Linux fcitx5 的 program 名：X11 是 WM_CLASS，Wayland 是 app_id），
+`*` 结尾前缀匹配、不区分大小写；应用名不保证 ASCII，前缀按字节切片切在多字节字符中间判不匹配、不 panic（`matches_app` 用 `str::get`）。
 
 ## crates/qingjian-render
 

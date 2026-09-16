@@ -22,7 +22,7 @@ use qingjian_core::Engine;
 use qingjian_platform::LocalModelConfig;
 use qingjian_platform::protocol::{ClientMessage, Frame, ScreenRect, ServerMessage, SessionId};
 
-pub use self::candidates::{CandidateSink, NoopSink};
+pub use self::candidates::{CandidateSink, NoopSink, RenderSettings};
 use self::composed::Composed;
 pub use self::config::RouterConfig;
 use self::reload::ConfigReload;
@@ -146,7 +146,13 @@ impl Router {
     }
 
     pub fn set_candidate_sink(&mut self, sink: Box<dyn CandidateSink>) {
+        sink.configure(self.config.render_settings());
         self.candidates = sink;
+    }
+
+    /// 直接碰 Engine：测试里改模式键这类启动时才设的开关。
+    pub fn engine_mut(&mut self) -> &mut Engine {
+        &mut self.engine
     }
 
     pub fn set_status_sink(&mut self, sink: Box<dyn StatusSink>) {

@@ -19,8 +19,8 @@ pub enum CliError {
     #[error(transparent)]
     Learning(#[from] LearningError),
 
-    /// 学习语言不是 en / ja。
-    #[error("learning language must be en or ja, got {0:?}")]
+    /// 学习语言不是 en / ja / es。
+    #[error("learning language must be en, ja or es, got {0:?}")]
     Language(String),
 
     #[error(transparent)]

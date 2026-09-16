@@ -27,6 +27,12 @@ impl Engine {
     }
 
     /// 設置是否啟用注音模式。開啟後鍵盤輸入按大千佈局解析。
+    /// 学习开关（`[general] learning`）：关掉后不再记词频、用户词、个人 n-gram 与敲错表，已学的照常参与排序；
+    /// 私密输入是另一个独立的开关（[`Self::set_private`]）。
+    pub fn set_learning(&mut self, enabled: bool) {
+        self.learner.set_disabled(!enabled);
+    }
+
     pub fn set_zhuyin_mode(&mut self, on: bool) {
         self.zhuyin = on;
         self.forget_span_cache();
@@ -69,10 +75,15 @@ impl Engine {
     /// 有效的模式键：双拼下 v / u / i 都是音节键，字母模式键让位，只剩 `?` 开头的问字。
     pub(super) fn modes(&self) -> ModeKeys {
         if self.shuangpin.is_some() {
-            ModeKeys::LETTERLESS
+            self.modes.letterless()
         } else {
             self.modes
         }
+    }
+
+    /// 缓冲区为空时敲 `?` 该不该进问字模式（配置 `[shortcut] question_mark`）：壳据此决定问号是入口还是标点。
+    pub fn takes_question_mark(&self) -> bool {
+        self.modes().question_mark
     }
 
     /// 双拼开着时把一段键解成全拼；全拼下为 `None`，调用方原样用键。
@@ -272,6 +283,16 @@ impl Engine {
 
     pub fn mode_keys(&self) -> ModeKeys {
         self.modes
+    }
+
+    /// 中英混输里中文候选是否总排在英文词前面（配置 `[general] chinese_first`，缺省关）。
+    /// 关着时拼音「不像话」的输入英文词排第一（`hello` 先英文再 荷兰咯）；开了英文词固定第二。
+    pub fn set_chinese_first(&mut self, on: bool) {
+        self.chinese_first = on;
+    }
+
+    pub fn chinese_first(&self) -> bool {
+        self.chinese_first
     }
 
     pub fn with_learner(mut self, learner: Box<dyn Learner>) -> Self {

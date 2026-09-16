@@ -12,11 +12,11 @@ use qingjian_windows_server::{
 
 /// 用户数据目录 `%APPDATA%\Qingjian`。非 Windows 拿不到。
 fn user_dir() -> Option<PathBuf> {
-    std::env::var_os("APPDATA").map(|dir| PathBuf::from(dir).join("Qingjian"))
+    qingjian_platform::dirs::user_dir()
 }
 
 fn config_path() -> Option<PathBuf> {
-    user_dir().map(|dir| dir.join("config.toml"))
+    qingjian_platform::dirs::config_path()
 }
 
 /// 首次启动把带说明的配置模板写到 `%APPDATA%\Qingjian\config.toml`（与 macOS 一致）；
@@ -97,8 +97,9 @@ fn assemble_with_fallback(mut spec: AssemblySpec, root: &Path) -> Result<Engine,
     })
 }
 
+/// 三个进程共用的日志目录 `%LOCALAPPDATA%\Qingjian\logs`（见 `qingjian_platform::dirs`），这里顺手建出来。
 fn log_dir() -> Option<PathBuf> {
-    let dir = user_dir()?.join("logs");
+    let dir = qingjian_platform::dirs::log_dir()?;
     std::fs::create_dir_all(&dir).ok()?;
     Some(dir)
 }
@@ -118,7 +119,7 @@ fn init_logging(config: &Config) -> Option<tracing_appender::non_blocking::Worke
         Some(dir) => {
             let appender = tracing_appender::rolling::RollingFileAppender::builder()
                 .rotation(tracing_appender::rolling::Rotation::DAILY)
-                .filename_prefix("qingjian-server")
+                .filename_prefix("server")
                 .filename_suffix("log")
                 .max_log_files(7)
                 .build(&dir)
@@ -188,6 +189,7 @@ fn main() {
     engine.set_shuangpin(config.general.shuangpin());
     engine.set_zhuyin_mode(config.general.zhuyin);
     engine.set_mode_keys(config.shortcut.mode);
+    engine.set_chinese_first(config.general.chinese_first);
     engine.log_session(env!("CARGO_PKG_VERSION"), "windows");
     dispatch::attach_cloud(&mut engine, &config.predict);
     let router_config = RouterConfig::from(&config);
@@ -217,21 +219,15 @@ fn main() {
     serve(router);
 }
 
-/// DLL 日志目录 `%LOCALAPPDATA%\Qingjian` 给 AppContainer 应用（任务栏搜索 / 设置）写权限：
+/// 日志目录 `%LOCALAPPDATA%\Qingjian\logs` 给 AppContainer 应用（任务栏搜索 / 设置）写权限：
 /// 那些进程里的 DLL 默认写不了用户目录，出了问题连日志都没有。失败只记警告。
 #[cfg(windows)]
 fn grant_appcontainer_log_access() {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    let Some(dir) =
-        std::env::var_os("LOCALAPPDATA").map(|base| PathBuf::from(base).join("Qingjian"))
-    else {
+    let Some(dir) = log_dir() else {
         return;
     };
-    if let Err(error) = std::fs::create_dir_all(&dir) {
-        tracing::warn!(%error, dir = %dir.display(), "建 DLL 日志目录失败");
-        return;
-    }
     // S-1-15-2-1 = ALL APPLICATION PACKAGES，S-1-15-2-2 = ALL RESTRICTED APPLICATION PACKAGES。
     let status = std::process::Command::new("icacls")
         .arg(&dir)
@@ -241,7 +237,7 @@ fn grant_appcontainer_log_access() {
         .status();
     match status {
         Ok(status) if status.success() => {}
-        Ok(status) => tracing::warn!(%status, "给 AppContainer 授权 DLL 日志目录失败"),
+        Ok(status) => tracing::warn!(%status, "给 AppContainer 授权日志目录失败"),
         Err(error) => tracing::warn!(%error, "跑 icacls 失败"),
     }
 }

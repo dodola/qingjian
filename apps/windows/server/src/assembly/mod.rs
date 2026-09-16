@@ -86,7 +86,7 @@ pub fn assemble(spec: &AssemblySpec) -> Result<Engine, ServerError> {
 }
 
 /// 用户导入词库目录 `dicts/`，不存在则创建；建不了当没有。
-fn user_dicts_dir(user_dir: Option<&Path>) -> Option<std::path::PathBuf> {
+pub(crate) fn user_dicts_dir(user_dir: Option<&Path>) -> Option<std::path::PathBuf> {
     let dir = user_dir?.join("dicts");
     std::fs::create_dir_all(&dir).ok()?;
     Some(dir)
@@ -134,7 +134,7 @@ fn load_vocabulary(user_dir: &Path, levels_dir: Option<&Path>) -> VocabularyBook
     let Some(levels_dir) = levels_dir else {
         return vocabulary;
     };
-    for language in [Language::English, Language::Japanese] {
+    for language in [Language::English, Language::Japanese, Language::Spanish] {
         let path = levels_dir.join(format!("levels-{}.tsv", language.code()));
         if !path.is_file() {
             continue;

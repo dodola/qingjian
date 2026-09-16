@@ -18,7 +18,9 @@ impl Host {
             tracing::warn!(%error, "自定义短语配置未应用");
         }
         self.engine.set_mode_keys(config.shortcut.mode);
+        self.engine.set_chinese_first(config.general.chinese_first);
         self.engine.set_shuangpin(config.general.shuangpin());
+        self.engine.set_learning(config.general.learning);
         logging::set_level(config.general.log_level);
         self.translation_keys = config.shortcut.translation_keys();
         self.delete_keys = config.shortcut.delete_keys();
@@ -31,6 +33,8 @@ impl Host {
         self.apps = config.apps.clone();
         self.window.set_theme(config.general.theme);
         self.window.set_layout(config.general.layout);
+        self.window.set_font(&config.general.font);
+        self.window.set_renderer(config.general.renderer);
         self.apply_learning_language(&config.general.learning_language);
         if self.input_log_enabled != Some(config.general.input_log) {
             self.input_log_enabled = Some(config.general.input_log);

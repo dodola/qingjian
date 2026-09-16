@@ -41,7 +41,7 @@ pub struct Args {
     #[arg(long)]
     pub glossary: Option<PathBuf>,
 
-    /// 学习语言：en / ja。也可用环境变量 QINGJIAN_LEARNING_LANGUAGE
+    /// 学习语言：en / ja / es。也可用环境变量 QINGJIAN_LEARNING_LANGUAGE
     #[arg(long, env = "QINGJIAN_LEARNING_LANGUAGE", default_value = "en")]
     pub language: String,
 
@@ -72,6 +72,10 @@ pub struct Args {
     /// 英文模式（输入法里是 Caps Lock 亮着）：字母不当拼音，候选来自英文词表的补全与拼错纠正
     #[arg(long)]
     pub english_mode: bool,
+
+    /// 打开中文优先（配置 [general] chinese_first = true）：整段是英文词时中文候选排第一、英文第二，评测两种排法用
+    #[arg(long)]
+    pub chinese_first: bool,
 
     /// 双拼方案（xiaohe / ziranma / microsoft / sogou），覆盖配置里的 [general] shuangpin；off 强制全拼
     #[arg(long)]

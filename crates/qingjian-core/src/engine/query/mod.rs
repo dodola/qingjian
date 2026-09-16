@@ -162,8 +162,8 @@ impl Engine {
             let hits = self.lookup_all(&positions);
             scored.reserve(hits.len());
             for hit in hits {
-                let full_last =
-                    last.complete && hit.syllables().nth(count - 1) == Some(last.text.as_str());
+                let full_last = last.complete
+                    && hit.syllables().nth(count - 1) == Some(patterns[count - 1].text);
                 scored.push(Scored {
                     hit,
                     full_last,
@@ -175,9 +175,7 @@ impl Engine {
             }
             // 输入的前缀也出候选（`kaifazhe` → 开发、开），否则长句没法逐词上屏。
             // 只收音节数正好等于前缀长度的词，更长的词会与输入后面的音节冲突。
-            let patterns = segmentation.patterns();
-            let expanded = self.fuzzy.expand(&patterns);
-            let positions = expanded.positions();
+            // 前缀不含最后一个位置，因此可复用上面的扩展结果。
             for prefix_len in (1..count).rev() {
                 let prefix = &patterns[..prefix_len];
                 let prefix_letters: usize = prefix.iter().map(|p| p.text.len()).sum();
@@ -237,16 +235,28 @@ impl Engine {
                 translation: None,
             })
             .collect();
-        self.insert_english(&mut items, unlikely);
+        // 中文优先：整句先进去占第一，英文词紧跟其后（第二）；关掉时英文词先进、整句排在开头的英文后面
+        if self.chinese_first {
+            self.insert_sentence(
+                &mut items,
+                &segmentations,
+                correction.is_none(),
+                english_tail.as_ref().filter(|_| correction.is_none()),
+                head_wins,
+            );
+            self.insert_english(&mut items, unlikely);
+        } else {
+            self.insert_english(&mut items, unlikely);
+            self.insert_sentence(
+                &mut items,
+                &segmentations,
+                correction.is_none(),
+                english_tail.as_ref().filter(|_| correction.is_none()),
+                head_wins,
+            );
+        }
         // 快捷候选按敲的键认（`rq` 日期），双拼下也是
         self.insert_shortcuts(&mut items, keys);
-        self.insert_sentence(
-            &mut items,
-            &segmentations,
-            correction.is_none(),
-            english_tail.as_ref().filter(|_| correction.is_none()),
-            head_wins,
-        );
         self.insert_emoji(&mut items);
         let rank = start.elapsed();
 

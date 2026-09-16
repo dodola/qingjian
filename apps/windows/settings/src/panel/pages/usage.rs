@@ -16,6 +16,7 @@ fn language_name(language: Language) -> &'static str {
     match language {
         Language::English => "英语",
         Language::Japanese => "日语",
+        Language::Spanish => "西班牙语",
         Language::Chinese => "中文",
     }
 }

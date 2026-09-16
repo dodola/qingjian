@@ -7,7 +7,8 @@ use crate::panel::controls::{field, index_of, page};
 use crate::panel::{Message, Settings};
 
 /// 学习语言：界面名 + 配置写法。
-pub(crate) const LANGUAGES: [(&str, &str); 2] = [("英语", "en"), ("日语", "ja")];
+pub(crate) const LANGUAGES: [(&str, &str); 3] =
+    [("英语", "en"), ("日语", "ja"), ("西班牙语", "es")];
 
 /// 双拼方案：界面名 + 配置写法（空串为全拼）。
 pub(crate) const SHUANGPIN: [(&str, &str); 5] = [
@@ -95,6 +96,13 @@ pub(crate) fn view(settings: &Settings, context: &mut ViewContext<Settings>) -> 
                 .is_on(english_off)
                 .is_enabled(g.english_candidates)
                 .on_toggled(context.callback(Message::EnglishOffInApps)),
+        ),
+        field(
+            "输入拼音时中文候选排在英文词前面",
+            "开着时整段输入是英文词时（hello、key）英文词排第二，空格上屏的仍是中文；关着（缺省）拼音不成立的输入英文词排第一。",
+            ToggleSwitch::new()
+                .is_on(g.chinese_first)
+                .on_toggled(context.callback(Message::ChineseFirst)),
         ),
     ];
     page("通用", StackPanel::new().spacing(16.0).children(rows))

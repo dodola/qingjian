@@ -1,7 +1,7 @@
 use qingjian_core::ShuangpinScheme;
 use serde::{Deserialize, Serialize};
 
-use super::{LayoutMode, LogLevel, PreeditMode, ThemeMode};
+use super::{CandidateRenderer, LayoutMode, LogLevel, PreeditMode, ThemeMode};
 
 /// 每页最多几个候选：数字键只有 1–9。
 pub const MAX_PAGE_SIZE: usize = 9;
@@ -18,7 +18,7 @@ pub const DEFAULT_PAGE_KEYS: (char, char) = ('[', ']');
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GeneralConfig {
-    /// 学习语言（ISO 639-1，`en` / `ja`）：候选旁显示哪种语言的译文。要有对应的释义表文件才生效。
+    /// 学习语言（ISO 639-1，`en` / `ja` / `es`）：候选旁显示哪种语言的译文。要有对应的释义表文件才生效。
     pub learning_language: String,
 
     /// 每页候选数，1–9。
@@ -33,11 +33,21 @@ pub struct GeneralConfig {
     /// 候选窗口竖排 / 横排。
     pub layout: LayoutMode,
 
+    /// 候选窗口由青简渲染器还是系统原生绘制。
+    pub renderer: CandidateRenderer,
+
+    /// 候选窗口字体的字族名；空为系统字体。只对青简渲染器生效，没装这个字体时回到系统字体。
+    pub font: String,
+
     /// 组句中的拼音显示在行内、候选窗口还是两处都显示。
     pub preedit: PreeditMode,
 
     /// 英文模式（Caps Lock 亮着）是否给英文候选（补全与拼错纠正）。关掉就是纯直通。
     pub english_candidates: bool,
+
+    /// 中文模式下中英混输时中文候选总排在英文词前面。缺省关：拼音不像话的输入（`hello`）英文词排第一，
+    /// 常在中文模式里打英文词的人不受影响；想要中文永远在前的自己打开。
+    pub chinese_first: bool,
 
     /// 中文模式下不在组句时敲的标点转成全角（`，。？！` 等，数字后的 `.` 保持半角）。
     /// Windows 悬浮状态条上可点切换；macOS 在偏好设置中选择默认模式。
@@ -58,6 +68,9 @@ pub struct GeneralConfig {
     /// 输入日志：每次上屏记一行到数据目录的 `input-log.jsonl`（敲的键、看到的候选、选了什么），只写本机，
     /// 给离线回归评测与个人模型用。缺省开；关掉就不记，「高级」页可清空。
     pub input_log: bool,
+
+    /// 学习输入习惯：按选择调整候选顺序、记新词与敲错纠正。关掉后不再记，已学的仍参与排序。
+    pub learning: bool,
 }
 
 impl Default for GeneralConfig {
@@ -68,14 +81,18 @@ impl Default for GeneralConfig {
             page_keys: PAGE_KEY_OPTIONS[0].to_owned(),
             theme: ThemeMode::default(),
             layout: LayoutMode::default(),
+            renderer: CandidateRenderer::default(),
+            font: String::new(),
             preedit: PreeditMode::default(),
             english_candidates: true,
+            chinese_first: false,
             full_width_punctuation: true,
             english_full_width_punctuation: false,
             shuangpin: String::new(),
             zhuyin: false,
             log_level: LogLevel::default(),
             input_log: true,
+            learning: true,
         }
     }
 }

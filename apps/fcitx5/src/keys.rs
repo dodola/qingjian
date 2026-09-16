@@ -109,6 +109,13 @@ fn text(global: &mut Global, session: &mut QjSession, keysym: u32, shift: bool) 
             recompose(global, session);
             return true;
         }
+        // 组句中 Shift+大写字母：交给 Engine 按小写进缓冲区参与匹配（`Cpan` 与 `cpan` 一样出 C盘），
+        // 原样上屏时 Core 还原大写；不在这里放行，放行会走「先上屏高亮」的路径，大写字母被丢掉。
+        if character.is_ascii_uppercase() && !global.engine.english_mode() {
+            global.engine.push(character);
+            recompose(global, session);
+            return true;
+        }
         // 其他字符：先把当前高亮上屏，再看能不能补一个全角标点（`nihao,` → 你好，）。
         let mut committed = commit_highlighted_text(global, session);
         if let Some(full_width) = global.engine.punctuate(character) {

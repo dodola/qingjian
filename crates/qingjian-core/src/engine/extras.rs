@@ -53,9 +53,20 @@ impl Engine {
         items.splice(position..position, shortcuts);
     }
 
+    /// `mp` → 第 3、4 项固定 mp3 / mp4。放在 emoji 之后调，免得词的 emoji 把位置挤掉。
+    pub(super) fn insert_media_formats(&self, items: &mut Vec<Candidate>, scope: &str) {
+        let formats = shortcut::media_format_forms(scope);
+        if formats.is_empty() {
+            return;
+        }
+        let position = items.len().min(shortcut::MEDIA_FORMAT_INSERT_AT);
+        items.splice(position..position, formats);
+    }
+
     /// 中英混输：整段输入是英文词就把它加进候选。
-    /// 缺省作为拼音「不像话」（切不动、或除末尾外还有声母缩写 / 残缺音节）时排第一，否则排第二；
+    /// 拼音「不像话」且英文够常用（Zipf ≥ [`ENGLISH_FIRST_MIN_ZIPF`]）时排第一，否则让到中文后面；
     /// 开了中文优先（`chinese_first`）整句 / 首个中文候选已经在前，英文词排第二。没有中文候选时总在第一。
+    /// 冷僻补全（Zipf < [`ENGLISH_COMPLETION_MIN_ZIPF`]）不出，个人词表里的词不受词频门槛限制。
     pub(super) fn insert_english(&self, items: &mut Vec<Candidate>, unlikely_pinyin: bool) {
         let lists = self.english_lists();
         if lists.is_empty() {
@@ -80,7 +91,17 @@ impl Engine {
             .filter(|c| c.kind == CandidateKind::Chinese)
             .map_or(0, |c| self.learner.choice_weight(text, &c.text));
         let english_weight = word.map_or(0, |w| self.learner.weight(w));
-        let english_first = !self.chinese_first && unlikely_pinyin && chosen <= english_weight;
+        let personal = self.learner.user_english();
+        let personal_hit = personal.is_some_and(|words| words.get(text).is_some());
+        let zipf = lists
+            .iter()
+            .find_map(|words| words.frequency(text))
+            .map(|f| f64::from(f) / 1000.0)
+            .unwrap_or(0.0);
+        let english_first = !self.chinese_first
+            && unlikely_pinyin
+            && chosen <= english_weight
+            && (personal_hit || zipf >= ENGLISH_FIRST_MIN_ZIPF);
         let mut position = if items.is_empty() || english_first {
             0
         } else {
@@ -91,15 +112,23 @@ impl Engine {
             position += 1;
         }
         // 英文补全：拼音不像话时（`compa` 切成 co'm'pa），整段多半是在打英文词的前面几个字母，补全紧跟在精确词之后；
-        // 个人词表在前，两张表里都有的只出一次
+        // 个人词表在前，两张表里都有的只出一次；随包表按 Zipf 过滤冷僻词
         if unlikely_pinyin && text.len() >= MIN_COMPLETION_LETTERS {
             let mut budget = ENGLISH_COMPLETIONS;
             for words in &lists {
+                let trusted = personal.is_some_and(|p| std::ptr::eq(*words, p));
                 for word in words.complete(text, budget) {
                     if items
                         .iter()
                         .any(|c| c.kind == CandidateKind::English && c.text == word)
                     {
+                        continue;
+                    }
+                    let zipf = words
+                        .frequency(&word.to_ascii_lowercase())
+                        .map(|f| f64::from(f) / 1000.0)
+                        .unwrap_or(0.0);
+                    if !trusted && zipf < ENGLISH_COMPLETION_MIN_ZIPF {
                         continue;
                     }
                     items.insert(position, english_candidate(word));

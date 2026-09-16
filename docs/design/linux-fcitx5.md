@@ -219,6 +219,7 @@ int  qj_select(QjSession*, uint32_t listed);      // 当前页列出的第几个
 // 结果读取（process_key / qj_select / qj_poll / qj_focus_out 之后）
 int         qj_is_empty(QjSession*);              // 组句缓冲区是否为空
 int         qj_has_commit(QjSession*);     const char* qj_commit_text(QjSession*);
+void        qj_clear_commit(QjSession*);            // 取走后清除，上屏是一次性的（否则 Shift 切上下文会重复上屏）
 int         qj_has_preedit(QjSession*);    const char* qj_preedit_text(QjSession*);
 uint32_t    qj_preedit_cursor(QjSession*);
 uint32_t    qj_preedit_segment_count(QjSession*);  const char* qj_preedit_segment(QjSession*, uint32_t);

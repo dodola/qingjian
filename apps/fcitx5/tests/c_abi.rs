@@ -6,9 +6,9 @@ use std::ffi::{CStr, CString};
 use std::path::{Path, PathBuf};
 
 use qingjian_fcitx5::{
-    qj_candidate_count, qj_candidate_text, qj_commit_text, qj_global_free, qj_global_init,
-    qj_has_commit, qj_has_preedit, qj_is_empty, qj_process_key, qj_select, qj_session_free,
-    qj_session_new,
+    qj_candidate_count, qj_candidate_text, qj_clear_commit, qj_commit_text, qj_focus_out,
+    qj_global_free, qj_global_init, qj_has_commit, qj_has_preedit, qj_is_empty, qj_process_key,
+    qj_select, qj_session_free, qj_session_new,
 };
 
 /// 仓库自带的产品数据目录（`assets/`），`dict.tsv` / `glossary-en.tsv` / emoji 都在里面。
@@ -81,6 +81,24 @@ fn types_nihao_and_commits_first_candidate() {
         .into_owned();
     assert_eq!(committed, "你好");
     assert_eq!(qj_is_empty(session), 1, "上屏后缓冲区清空");
+
+    qj_session_free(session);
+}
+
+#[test]
+fn commit_is_single_shot() {
+    let _harness = Harness::new();
+    let session = qj_session_new();
+
+    press(session, "nihao");
+    assert_eq!(qj_select(session, 0), 1);
+    assert_eq!(qj_has_commit(session), 1);
+    qj_clear_commit(session);
+    assert_eq!(qj_has_commit(session), 0, "取走后不应再有上屏文本");
+
+    // 失焦 / 重置（Shift 切上下文会触发）不允许把上一次的上屏文本再交一次
+    qj_focus_out(session);
+    assert_eq!(qj_has_commit(session), 0);
 
     qj_session_free(session);
 }

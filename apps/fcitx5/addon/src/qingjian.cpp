@@ -27,6 +27,7 @@ int32_t qj_process_key(QjSession *session, uint32_t keysym, uint32_t modifiers,
 int32_t qj_select(QjSession *session, uint32_t listed);
 int32_t qj_has_commit(QjSession *session);
 const char *qj_commit_text(QjSession *session);
+void qj_clear_commit(QjSession *session);
 int32_t qj_has_preedit(QjSession *session);
 const char *qj_preedit_text(QjSession *session);
 uint32_t qj_preedit_cursor(QjSession *session);
@@ -175,6 +176,9 @@ void QingjianState::updateUI() {
 
     if (qj_has_commit(session_)) {
         const std::string committed = textOr(qj_commit_text(session_));
+        // 上屏是一次性的：立刻取走并清除，否则后面的 activate / deactivate / reset（Shift 切上下文等）
+        // 会把同一段文字再 commit 一次。
+        qj_clear_commit(session_);
         if (!committed.empty()) {
             inputContext_->commitString(committed);
         }

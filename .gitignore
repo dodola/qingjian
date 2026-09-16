@@ -5,4 +5,5 @@
 .env
 /logs
 /data
+/apps/fcitx5/addon/build/
 .playwright-mcp/

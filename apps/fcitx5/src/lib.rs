@@ -267,6 +267,15 @@ pub extern "C" fn qj_commit_text(session: *mut QjSession) -> *const c_char {
     session.commit_ptr()
 }
 
+/// 取走上屏文本后清除。上屏是一次性的：不清的话，任何不经按键的 UI 刷新（activate / deactivate /
+/// reset，例如 Shift 切换输入上下文）都会把同一段文字再 commit 一次。
+#[unsafe(no_mangle)]
+pub extern "C" fn qj_clear_commit(session: *mut QjSession) {
+    if let Some(session) = unsafe { session.as_mut() } {
+        session.clear_commit();
+    }
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn qj_has_preedit(session: *mut QjSession) -> c_int {
     let Some(session) = (unsafe { session.as_ref() }) else {

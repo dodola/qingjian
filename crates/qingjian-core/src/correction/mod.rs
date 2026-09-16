@@ -1,5 +1,7 @@
 //! 拼写纠错：用户敲的拼音「不像话」时（切不干净，或非末尾有简拼 / 残缺音节），
 //! 试一处编辑（相邻换位、换一个字母、多一个、少一个）能不能变成每个音节都完整的拼音。
+//! 相邻换位另放宽到「末尾音节还没敲完」（`mignt` → `ming t…`、`migntia` → `ming tia…`）：
+//! 敲反两个键的人多半还在往下敲，等整个词敲完再纠就晚了一拍。
 //!
 //! 这里只产生**候选纠正**（变体 + 完整切分），挑哪一个由 Engine 用词库和语言模型定：
 //! 纠正后至少要能凑出一个两音节以上的词，否则宁可不纠。学习方面：接受过的纠正按原输入串记选择，
@@ -53,6 +55,16 @@ pub fn complete_segmentation(text: &str) -> Option<Segmentation> {
         .find(|s| s.incomplete_count() == 0)
 }
 
+/// `text` 能否切成「每个音节都完整，或只有末尾一个没敲完」的拼音，按解析器的偏好取第一种：
+/// `mingt` → `ming t…`，`mingtia` → `ming tia…`（不是 `ming ti a`，正常敲到这里也是这么切的）。
+/// 末尾没敲完时至少要有一个完整音节在前，整段都是残缺的不算。
+pub fn loose_segmentation(text: &str) -> Option<Segmentation> {
+    parser::segment(text).ok()?.into_iter().find(|s| {
+        s.incomplete_count() == 0
+            || (s.syllables.len() >= 2 && s.incomplete_count() == 1 && s.last_is_partial())
+    })
+}
+
 /// 切出来的拼音末尾是个单字母（`mingtai'n`）：可能是合法简拼，也可能是相邻两键敲反了（`mingtain` → `mingtian`）。
 pub fn trailing_single_letter(best: Option<&Segmentation>) -> bool {
     best.is_some_and(|best| {
@@ -80,9 +92,15 @@ fn candidates_from(input: &str, variants: Vec<(Edit, String)>) -> Vec<Correction
     }
     variants
         .into_iter()
-        .filter(|(_, corrected)| parser::is_fully_segmentable(corrected))
         .filter_map(|(edit, corrected)| {
-            let segmentation = complete_segmentation(&corrected)?;
+            // 相邻换位的变体允许末尾音节没敲完；其余先用无分配的「能否完整切分」挡掉绝大多数
+            let segmentation = if matches!(edit, Edit::Transpose { .. }) {
+                loose_segmentation(&corrected)?
+            } else if parser::is_fully_segmentable(&corrected) {
+                complete_segmentation(&corrected)?
+            } else {
+                return None;
+            };
             Some(Correction {
                 original: input.to_owned(),
                 corrected,
@@ -137,5 +155,34 @@ mod tests {
         assert!(found.iter().any(
             |c| c.corrected == "nihaoma" && matches!(c.edit, Edit::Transpose { index: 3, .. })
         ));
+    }
+
+    #[test]
+    fn transposition_may_leave_the_last_syllable_unfinished() {
+        // 敲到一半：mignt → ming t…、migntia → ming tia…
+        let found = candidates("mignt");
+        let unfinished = found
+            .iter()
+            .find(|c| c.corrected == "mingt")
+            .expect("mingt");
+        assert!(matches!(unfinished.edit, Edit::Transpose { index: 2, .. }));
+        assert_eq!(unfinished.segmentation.joined("'"), "ming't");
+        assert!(unfinished.segmentation.last_is_partial());
+        let found = candidates("migntia");
+        let unfinished = found
+            .iter()
+            .find(|c| c.corrected == "mingtia")
+            .expect("mingtia");
+        assert_eq!(unfinished.segmentation.joined("'"), "ming'tia");
+        // 替换 / 多敲 / 少敲仍要求每个音节都完整：migna 的替换变体 mingn… 这类不收
+        assert!(
+            candidates("mignt")
+                .iter()
+                .filter(|c| !matches!(c.edit, Edit::Transpose { .. }))
+                .all(|c| c.segmentation.incomplete_count() == 0)
+        );
+        // 整段都残缺的不算
+        assert!(loose_segmentation("zh").is_none());
+        assert!(loose_segmentation("mingt").is_some());
     }
 }
